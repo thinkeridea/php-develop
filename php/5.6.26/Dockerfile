@@ -162,7 +162,7 @@ RUN set -xe \
     && apk add --no-cache --virtual .php-rundeps $runDeps \
     \
     # 安装redis扩展
-    && wget -O /tmp/redis.tgz http://pecl.php.net/get/redis-2.2.8.tgz \
+    && wget -O /tmp/redis.tgz http://pecl.php.net/get/redis-4.2.0.tgz \
     && mkdir -p /usr/src/redis \
     && tar -zxf /tmp/redis.tgz -C /usr/src/redis --strip-components=1 \
     && cd /usr/src/redis \
