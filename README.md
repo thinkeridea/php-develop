@@ -2,7 +2,7 @@
 
 `Docker PHP` 开发环境
 
-`PHP` 镜像构建在 [PHP for Dockerfile](./PHP/README.md)
+`PHP` 镜像构建在 [PHP for Dockerfile](./php/README.md)
 
 ## 使用
 
@@ -10,11 +10,11 @@
 
 | 环境变量名称 | 描述 |
 | --- | --- |
-| `WEB_PATH` | 网站名录， 就是网站程序根路径 |
-| `MYSQL_DATA` | `MySql` 数据库数据目录，本地存储 |
+| `WEB_PATH` | 网站目录， 就是网站程序根路径 |
+| `MYSQL_DATA` | `MySql` 数据库数据目录，本地持久化存储 |
 | `MYSQL_ROOT_PASSWORD` | 初次运行需要设置，作为 `MySql` `root` 密码 | 
-| `WEB_USER` | `php-fpm` 运行账户，一般为主机账户，有权限对 `${WEB_PATH}` 读写，常配置为用户 `id`，用名称可能在容器内找不到 |
-| `WEB_GROUP` | `php-fpm` 运行账户组，一般为主机账户组，有权限对 `${WEB_PATH}` 读写，常配置为用户组 `id`，用名称可能在容器内找不到 |
+| `WEB_USER` | `php-fpm` 运行账户，一般为主机账户，有权限对 `${WEB_PATH}` 读写，常配置为用户 `id`，用户名可能在容器内找不到 |
+| `WEB_GROUP` | `php-fpm` 运行账户组，一般为主机账户组，有权限对 `${WEB_PATH}` 读写，常配置为用户组 `id`，用户组可能在容器内找不到 |
 
 - 启动服务
     
@@ -36,8 +36,8 @@ $ docker-compose down
 
 - 为保证 `MySql` 密码安全，不要配置环境变量 `MYSQL_ROOT_PASSWORD`， 而通过运行时设置，例如执行如下命令
 
-> 在首个命令前面加空格，以防止被加入到历史记录中，为了确保安全关闭当前shell窗口， 清空本地历史。
-> 重启是为了保证MySql容器中没有这个环境变量，避免容器泄露密码
+> 在首个命令前面加空格，以防止被加入到历史记录中，为了确保安全关闭当前 `shell` 窗口， 清空本地历史。
+> 重启是为了保证 `MySql` 容器中没有这个环境变量，避免容器泄露密码
 
 ```shell 
 $  MYSQL_ROOT_PASSWORD=123456 docker-compose up -d
@@ -88,7 +88,7 @@ $ echo -e "[www]\nuser = ${WEB_USER}\ngroup = ${WEB_GROUP}" > php-conf.d/user.in
 
 ## `Redis` 持久化问题
 
-修改 `docker-compose.yml` 中 `Redis` 服务配置，如下：
+修改 `docker-compose.yml` 中 `redis` 服务配置，如下：
 
 ```yaml
 redis:
@@ -104,3 +104,39 @@ redis:
 ```
 
 其中 `./redis.conf` 为自己创建的 `Redis` 配置文件。
+
+## `PHP` 扩展
+
+[PHP](./php/README.md) 这里有一份简短的模块列表， 详细的可以查看 `phpinfo` 程序获取。
+
+新增扩展的方法， 修改 `docker-compose.yml` 中 `php` 服务配置，如下：
+
+```yaml
+php:
+  container_name: php
+  image: php-extend
+  build: ./php-extend/
+  privileged: true
+  restart: always
+  volumes:
+    - ./php-conf.d:/usr/local/etc/conf.d/:rw
+    - ${WEB_PATH}:/var/www:rw
+  depends_on:
+    - redis
+    - mysql
+```
+
+然后在 `./php-extend/` 目录下创建 `Dockerfile` 文件， 内容如下（替换 `myshell` 为自己安装扩展 `shell` 命令）:
+
+```dockerfile
+FROM thinkeridea/php:7.1.8
+
+RUN set -xe \
+    && myshell
+    && echo "extension={扩展名称}.so" >> /usr/local/etc/conf.d/my-exend.ini
+```
+
+然后运行 `docker-compose build php` 就会编译一个为 `php-extend` 的镜像， 这个镜像包含 `PHP` 环境与你添加的扩展。
+
+> 在运行 `docker-compose build php` 先注销掉整个服务，避免重启是出错。
+ 
