@@ -1,0 +1,48 @@
+version: '3'
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    privileged: true
+    restart: always
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d/
+      - ${WEB_PATH}:/var/www
+    depends_on:
+      - php
+
+  php:
+    container_name: php
+    image: thinkeridea/php:7.1.8
+    privileged: true
+    restart: always
+    volumes:
+      - ./php-conf.d:/usr/local/etc/conf.d/:rw
+      - ${WEB_PATH}:/var/www:rw
+    depends_on:
+      - redis
+      - mysql
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    privileged: true
+    restart: always
+    ports:
+        - "6379:6379"
+
+  mysql:
+    container_name: mysql
+    image: mysql
+    ports:
+      - "3306:3306"
+    restart: always
+    privileged: true
+    volumes:
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ${MYSQL_DATA}:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD
+
