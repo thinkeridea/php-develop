@@ -75,5 +75,3 @@ zlib
 [Zend Modules]
 
 ```
-
-github.com/thinkeridea/php-develop/php/5.6.26/Dockerfile
